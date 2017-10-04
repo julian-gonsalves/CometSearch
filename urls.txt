@@ -1,0 +1,3 @@
+http://google.ca
+http://bing.com
+http://utoronto.ca
