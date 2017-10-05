@@ -1,4 +1,4 @@
-import operator
+import operator, re
 from bottle import route, run, static_file,view, get,post, template, request
 
 # store words searched and frequency in dictionary
@@ -15,7 +15,7 @@ def get_top_words():
         return [(word,freq) for (word,freq) in sorted(words_searched.items(),key=operator.itemgetter(1), reverse=True)][:20]
 
 def handleSearchWords(phrase):
-    """ Adds each word in phrase to a search word cahce and outputs top 20 most searched words """
+    """ Adds each word in phrase to a search word cache and outputs top 20 most searched words """
     if isinstance(phrase,str):
         words = phrase.lower().split(" ")
         for word in words:
@@ -25,19 +25,36 @@ def handleSearchWords(phrase):
                 words_searched[word] += 1
     return get_top_words()
 
+	
+def calculate(inputText):
+	wordList = re.sub("[^\w]", " ",  inputText).split()	
+	storedData={}
+	for word in wordList:
+		word = word.lower()
+		if word in storedData:
+			storedData[word]+= 1
+		else:
+			storedData[word] = 1
+	return storedData	
+	
 # handle search page request
 @route('/')
-def show_index():
+def show_index(): 
     """ Returns the index search page """
     if bool(request.query):
         search_query = request.query.getall('keywords')
         top_words = handleSearchWords(search_query[0])
-        return template('results',top_words=top_words,search_query=search_query[0])
+	insertionOrderList = re.sub("[^\w]", " ",  search_query[0]).split()
+	theList = []
+        for word in insertionOrderList:
+            if word not in theList:
+        	    theList.append(word)
+        calculated = calculate(search_query[0])
+        return template('results', insertionOrderList = theList, calculated = calculated,top_words=top_words,search_query=search_query[0])
     else:
         return template('index')
-
-
-
+	
+		
 # handle static file requests
 @route('/css/<filepath:path>')
 def get_css(filepath):
@@ -75,4 +92,4 @@ def pages(filepath):
 
 
 # run
-run(host='localhost',port=8080,debug=True)
+run(host='127.0.0.1',port=80,debug=True)

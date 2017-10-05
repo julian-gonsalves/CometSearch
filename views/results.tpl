@@ -21,12 +21,35 @@
     <div class="container-fluid">
         <div class="row row-offset-mid"></div>
         <div class='row'>
-            <div class="col-md-8 col-sm-8 col-xs-10 col-md-offset-2 col-sm-offset-2 col-xs-offset-1">
+			<div class="col-md-8 col-sm-8 col-xs-10 col-md-offset-2 col-sm-offset-2 col-xs-offset-1">
                 <div class="well">
                     <p class="text-center">{{search_query}}</p> 
                 </div>
+				
+				    <table class="table table-striped table-bordered table-condensed text-center" id="results">
+                        <thead>
+                        <tr>
+                            <th class="text-center">Word</th>
+                            <th class="text-center">Count</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        % for x in range(0,len(insertionOrderList)):
+                            <tr>
+                                <td>{{insertionOrderList[x]}}</td>
+                                <td>{{calculated[insertionOrderList[x]]}}</td>
+                                
+                            </tr>
+                        % end
+                        </tbody>
+                    </table>
+				
+				
+				
+				
+				
                 % if bool(top_words):
-                    <table class="table table-striped table-bordered table-condensed text-center" id="results">
+                    <table class="table table-striped table-bordered table-condensed text-center" id="history">
                         <thead>
                         <tr>
                             <th class="text-center">#</th>
@@ -50,6 +73,7 @@
             </div>
         </div>
     </div>  
+	
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="js/jquery.min.js"></script>
     <!-- Include all compiled plugins (below), or include individual files as needed -->
