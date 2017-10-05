@@ -18,38 +18,50 @@
     <![endif]-->
 </head>
 <body>
+        <nav class="navbar navbar-default navbar-fixed-top">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <a class="navbar-brand" href="/">
+                        <img alt="Comet" src="img/meteor_icon.png">
+                    </a>
+                </div>
+                <h3> Comet Search </h3>
+            </div>
+        </nav>
     <div class="container-fluid">
-        <div class="row row-offset-mid"></div>
+        <div class="row row-offset-small"></div>
         <div class='row'>
 			<div class="col-md-8 col-sm-8 col-xs-10 col-md-offset-2 col-sm-offset-2 col-xs-offset-1">
                 <div class="well">
                     <p class="text-center">{{search_query}}</p> 
                 </div>
-				
-				    <table class="table table-striped table-bordered table-condensed text-center" id="results">
-                        <thead>
+
+                <h2 class="text-primary">Results</h2>
+                <table class="table table-condensed text-center" id="results">
+                    <thead>
+                    <tr>
+                        <th class="text-center">Word</th>
+                        <th class="text-center">Count</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    % for x in range(0,len(insertionOrderList)):
                         <tr>
-                            <th class="text-center">Word</th>
-                            <th class="text-center">Count</th>
+                            <td>{{insertionOrderList[x]}}</td>
+                            <td>{{calculated[insertionOrderList[x]]}}</td>
+                            
                         </tr>
-                        </thead>
-                        <tbody>
-                        % for x in range(0,len(insertionOrderList)):
-                            <tr>
-                                <td>{{insertionOrderList[x]}}</td>
-                                <td>{{calculated[insertionOrderList[x]]}}</td>
-                                
-                            </tr>
-                        % end
-                        </tbody>
-                    </table>
-				
+                    % end
+                    </tbody>
+                </table>
+                <br>
 				
 				
 				
 				
                 % if bool(top_words):
-                    <table class="table table-striped table-bordered table-condensed text-center" id="history">
+                    <h2 class="text-primary">Search History</h2>
+                    <table class="table table-condensed text-center" id="history">
                         <thead>
                         <tr>
                             <th class="text-center">#</th>

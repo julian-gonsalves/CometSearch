@@ -1,3 +1,7 @@
 .row-offset-mid {
     margin-top: 20vh;
 }
+
+.row-offset-small {
+    margin-top: 15vh;
+}

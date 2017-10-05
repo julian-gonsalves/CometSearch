@@ -18,6 +18,16 @@
     <![endif]-->
 </head>
 <body>
+    <nav class="navbar navbar-default navbar-fixed-top">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="/">
+                    <img alt="Comet" src="img/meteor_icon.png">
+                </a>
+            </div>
+            <h3> Comet Search </h3>
+        </div>
+    </nav>
     <div class="container-fluid">
         <div class="row row-offset-mid"></div>
         <div class='row'>
@@ -29,6 +39,12 @@
                 </div>
                 <button type="submit" class="col-sm-2 btn btn-primary "><span class="glyphicon glyphicon-search"></span> Search</button>
             </form> 
+        </div>
+        <div class="row-offset-small"></div>
+        <div class="row">
+            <div class="col-sm-12">
+                <img src="img/meteor.png" class="img img-responsive center-block">
+            </div>
         </div>
     </div>  
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
