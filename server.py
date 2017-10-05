@@ -10,7 +10,9 @@ def get_top_words():
     if not bool(words_searched):
         return None
     else:
-        return [(word,freq) for (word,freq) in sorted(words_searched.items(),key=operator.itemgetter(1))][:20]
+        most_searched = {}
+        #print sorted(words_searched.items(),key=operator.itemgetter(1),reverse=True)
+        return [(word,freq) for (word,freq) in sorted(words_searched.items(),key=operator.itemgetter(1), reverse=True)][:20]
 
 def handleSearchWords(phrase):
     """ Adds each word in phrase to a search word cahce and outputs top 20 most searched words """
