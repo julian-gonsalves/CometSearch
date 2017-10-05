@@ -53,3 +53,13 @@ In view of the above table, the expected result form the crawler should be as fo
 |    6    | set([3, 2])             |
 
 ### Implementation
+The code for unit test is saved in the file `test_crawler.py`. The unit test implementation makes use of the unittest class in python.
+
+A class, `TestCrawlerMethods` was created to handle the various test cases for the newly created functions in the `Crawler` class in `crawler.py`.
+
+ 1. First the server is run to serve local test html pages as specified in `test_urls.txt`.
+ 2. Then the crawler is called when the unit test crawler class is called. 
+ 3. This crawls through the test html pages and generates the requisite data structures
+ 4. The data structures in question should be as shown in the tables above.
+ 5. The unit test runs all the test cases and compares them to the expected output.
+ 6. The results are printed out with errors if any.

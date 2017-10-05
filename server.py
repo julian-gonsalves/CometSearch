@@ -1,25 +1,36 @@
+import operator
 from bottle import route, run, static_file,view, get,post, template, request
 
 # store words searched and frequency in dictionary
 words_searched = {}
 
+def get_top_words():
+    """ Sorts the words_searched dictionary and returns the 20 most searched words """
+    # Check if words_searched contains anything
+    if not bool(words_searched):
+        return None
+    else:
+        return [(word,freq) for (word,freq) in sorted(words_searched.items(),key=operator.itemgetter(1))][:20]
+
 def handleSearchWords(phrase):
+    """ Adds each word in phrase to a search word cahce and outputs top 20 most searched words """
     if isinstance(phrase,str):
-        words = phrase.split(" ")
+        words = phrase.lower().split(" ")
         for word in words:
             if word not in words_searched.keys():
                 words_searched[word] = 1
             else:
                 words_searched[word] += 1
-    
+    return get_top_words()
 
 # handle search page request
 @route('/')
 def show_index():
     """ Returns the index search page """
     if bool(request.query):
-        my_dict = request.query.getall('keywords')
-        return template('results', my_dict)
+        search_query = request.query.getall('keywords')
+        top_words = handleSearchWords(search_query[0])
+        return template('results',top_words=top_words,search_query=search_query[0])
     else:
         return template('index')
 
@@ -35,6 +46,11 @@ def get_css(filepath):
 def get_js(filepath):
     """ Returns javascript files """
     return static_file(filepath, root="public/js/")
+
+@route('/fonts/<filepath:path>')
+def get_font(filepath):
+    """ Returns fonts files """
+    return static_file(filepath, root="public/fonts/")
 
 @route('/img/<filepath:path>')
 @route('/image/<filepath:path>')

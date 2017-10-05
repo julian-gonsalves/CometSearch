@@ -19,7 +19,7 @@
 </head>
 <body>
     <div class="container-fluid">
-        <div class="row row-offset-mid">
+        <div class="row row-offset-mid"></div>
         <div class='row'>
             <form method="GET" class="text-center">
                 <div class="col-md-6 col-sm-6 col-xs-10 col-md-offset-2 col-sm-offset-2 col-xs-offset-1">
