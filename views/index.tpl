@@ -25,7 +25,7 @@
                     <img alt="Comet" src="img/meteor_icon.png">
                 </a>
             </div>
-            <h3> Comet Search </h3>
+            <h2 class="brand-text"><a href="/"> Comet Search</a></h2>
         </div>
     </nav>
     <div class="container-fluid">
@@ -34,10 +34,10 @@
             <form method="GET" class="text-center">
                 <div class="col-md-6 col-sm-6 col-xs-10 col-md-offset-2 col-sm-offset-2 col-xs-offset-1">
                     <div class="form-group">
-                        <input type="text" name="keywords" class="form-control" placeholder="type your search query here">
+                        <input type="text" name="keywords" class="form-control input-lg" placeholder="type your search query here">
                     </div>
                 </div>
-                <button type="submit" class="col-sm-2 btn btn-primary "><span class="glyphicon glyphicon-search"></span> Search</button>
+                <button type="submit" class="col-sm-2 btn btn-primary btn-lg"><span class="glyphicon glyphicon-search"></span> Search</button>
             </form> 
         </div>
         <div class="row-offset-small"></div>

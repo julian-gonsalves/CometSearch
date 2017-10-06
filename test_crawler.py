@@ -21,19 +21,20 @@ class TestCrawlerMethods(unittest.TestCase):
 
     # test get_lexicon
     def test_get_lexicon(self):
-        expected_dictionary={'boy':6, 'dog':5, 'egg':4, 'cat':3, 'ant':2, 'fat':1}
-        self.assertDictEqual(expected_dictionary,self._cr.get_lexicon())
+        expected_list= ['ant', 'boy', 'cat', 'dog', 'egg', 'fat']
+        self.assertListEqual(expected_list,self._cr.get_lexicon())
 
     # test get_document_index
     def test_get_document_index(self):
         expected_dictionary={
-            'http://localhost:8080/test/page5.html':6,
-            'http://localhost:8080/test/page4.html':5, 
-            'http://localhost:8080/test/page3.html':4,
-            'http://localhost:8080/test/page2.html':3,
-            'http://localhost:8080/test/page1.html':2,
-            'http://localhost:8080/test':1
+            6:('http://localhost:8080/test/page5.html','e','fat'),
+            5:('http://localhost:8080/test/page4.html','d','ant cat egg'),
+            4:('http://localhost:8080/test/page3.html','c','cat dog dog'),
+            3:('http://localhost:8080/test/page2.html','b','boy cat boy'),
+            2:('http://localhost:8080/test/page1.html','a','boy cat dog'),
+            1:('http://localhost:8080/test','a b c d e', 'a b c d e')
         }
+        print self._cr.get_document_index()
         self.assertDictEqual(expected_dictionary,self._cr.get_document_index())
 
     # test get_inverted_index
@@ -59,6 +60,11 @@ class TestCrawlerMethods(unittest.TestCase):
             'boy': set(['http://localhost:8080/test/page2.html', 'http://localhost:8080/test/page1.html'])
         }
         self.assertDictEqual(expected_dictionary,self._cr.get_resolved_inverted_index())
+
+    # test api that returns title and short description given a document id
+    def test_get_document_info(self):
+        expected_tuple=('a','boy cat dog')
+        self.assertTupleEqual(expected_tuple,self._cr.get_document_info(2))
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TestCrawlerMethods)
 unittest.TextTestRunner(verbosity=2).run(suite)

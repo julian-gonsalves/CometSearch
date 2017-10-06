@@ -1,7 +1,13 @@
+@import url('https://fonts.googleapis.com/css?family=Satisfy');
+
 .row-offset-mid {
     margin-top: 20vh;
 }
 
 .row-offset-small {
     margin-top: 15vh;
+}
+
+.brand-text {
+    font-family: 'Satisfy', cursive;
 }

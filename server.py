@@ -92,4 +92,4 @@ def pages(filepath):
 
 
 # run
-run(host='127.0.0.1',port=80,debug=True)
+run(host='localhost',port=8080,debug=True)

@@ -35,6 +35,7 @@ def attr(elem, attr):
         return ""
 
 WORD_SEPARATORS = re.compile(r'\s|\n|\r|\t|[^a-zA-Z0-9\-_]')
+PAGE_DESCRIPTION_LENGTH = 15
 
 class crawler(object):
     """Represents 'Googlebot'. Populates a database by crawling and indexing
@@ -48,10 +49,16 @@ class crawler(object):
         and with the file containing the list of seed URLs to begin indexing."""
         self._url_queue = [ ]
 
-        # Document Index: Stores all url and their respective document id
+        # Document Id Cache: Stores all url and their respective document id
         self._doc_id_cache = { }
+
+        # Title Cache: Stores all document ids and their respective titles
+        self._title_cache = { }
+
+        # Page Description Cache: Stores all document ids and their respective decriptions
+        self._pg_cache = { }
         
-        # Lexicon: Stores all words and their respective word id
+        # Lexicon Cache: Stores all words and their respective word id
         self._word_id_cache = { }
 
         # Inverted Index: Links words to every document in which they occur
@@ -119,6 +126,8 @@ class crawler(object):
         self._curr_doc_id = 0
         self._font_size = 0
         self._curr_words = None
+        self._curr_page_description_count = 0
+        self._curr_page_description_flag = False
 
         # get all urls into the queue
         try:
@@ -209,6 +218,7 @@ class crawler(object):
         print "document title="+ repr(title_text)
 
         # TODO update document title for document id self._curr_doc_id
+        self._title_cache[self._curr_doc_id] = title_text
     
     def _visit_a(self, elem):
         """Called when visiting <a> tags."""
@@ -265,6 +275,13 @@ class crawler(object):
                 continue
             self._curr_words.append((self.word_id(word), self._font_size))
         
+        # Add the word to page description
+        if self._curr_doc_id not in self._pg_cache:
+            self._pg_cache[self._curr_doc_id] = ''
+        if (len(self._pg_cache[self._curr_doc_id]) < PAGE_DESCRIPTION_LENGTH) and (self._curr_page_description_flag):
+            self._pg_cache[self._curr_doc_id] += ' ' + ' '.join(word.strip() for word in words)
+            self._pg_cache[self._curr_doc_id] = ' '.join(self._pg_cache[self._curr_doc_id].split())
+        
     def _text_of(self, elem):
         """Get the text inside some element without any tags."""
         if isinstance(elem, Tag):
@@ -313,6 +330,10 @@ class crawler(object):
                         tag = NextTag(tag.parent.nextSibling)
                     
                     continue
+
+                # Start recording page description when we enter the body
+                if (tag_name == 'body'):
+                    self._curr_page_description_flag = True
                 
                 # enter the tag
                 self._enter[tag_name](tag)
@@ -357,6 +378,9 @@ class crawler(object):
                 self._add_document_to_words()
                 print "    url="+repr(self._curr_url)
 
+                # reset page description recording flag
+                self._curr_page_description_flag = False
+
             except Exception as e:
                 print e
                 pass
@@ -366,11 +390,11 @@ class crawler(object):
 
     def get_lexicon(self):
         """returns a mapping of a word with its id as a dict"""
-        return self._word_id_cache
+        return sorted(self._word_id_cache)
 
     def get_document_index(self):
-        """returns a mapping of a documnet with its id as a dict"""
-        return self._doc_id_cache
+        """returns a mapping of a document id with a tuple of its url and title as a dict"""
+        return {doc_id:(doc_url, self._title_cache[doc_id], self._pg_cache[doc_id]) for (doc_url, doc_id) in self._doc_id_cache.items()}
 
     def get_inverted_index(self):
         """returns the inverted index in a dict()"""
@@ -381,11 +405,12 @@ class crawler(object):
         """returns the inverted index in a dict() where word ids
         are replaced by the word strings, and the document Ids are 
         replaced by URL strings in the inverted index"""
-        return_val = {}
-        for word_id in self._inverted_index:
-            return_val[self.resolve_word(word_id)] = set([self.resolve_document(doc_id) for doc_id in self._inverted_index[word_id]])
-        return return_val
+        return  {self.resolve_word(word_id):set([self.resolve_document(doc_id) for doc_id in self._inverted_index[word_id]]) for word_id in self._inverted_index}
+
+    def get_document_info(self, doc_id):
+        """returns a page title and page description as a tuple"""
+        return (self._title_cache[doc_id],self._pg_cache[doc_id])
 
 if __name__ == "__main__":
-    bot = crawler(None, "urls.txt")
+    bot = crawler(None, "test_urls.txt")
     bot.crawl(depth=1)

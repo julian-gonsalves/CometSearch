@@ -25,7 +25,7 @@
                         <img alt="Comet" src="img/meteor_icon.png">
                     </a>
                 </div>
-                <h3> Comet Search </h3>
+                <h2 class="brand-text"><a href="/"> Comet Search</a></h2>
             </div>
         </nav>
     <div class="container-fluid">
@@ -33,7 +33,7 @@
         <div class='row'>
 			<div class="col-md-8 col-sm-8 col-xs-10 col-md-offset-2 col-sm-offset-2 col-xs-offset-1">
                 <div class="well">
-                    <p class="text-center">{{search_query}}</p> 
+                    <p class="text-left">Your search query was: <blockquote>{{search_query}}</blockquote></p> 
                 </div>
 
                 <h2 class="text-primary">Results</h2>
