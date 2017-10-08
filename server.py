@@ -45,8 +45,8 @@ def show_index():
     if bool(request.query):
         search_query = request.query.getall('keywords')
         top_words = handleSearchWords(search_query[0])
-	insertionOrderList = re.sub("[^\w]", " ",  search_query[0]).split()
-	theList = []
+        insertionOrderList = re.sub("[^\w]", " ",  search_query[0]).split()
+        theList = []
         for word in insertionOrderList:
             word = word.lower()
             if word not in theList:
@@ -94,4 +94,4 @@ def pages(filepath):
 
 
 # run
-run(host='127.0.0.1',port=80,debug=True)
+run(host='localhost',port=8080,debug=True)
