@@ -17,7 +17,7 @@ def get_top_words():
 def handleSearchWords(phrase):
     """ Adds each word in phrase to a search word cache and outputs top 20 most searched words """
     if isinstance(phrase,str):
-        words = phrase.lower().split(" ")
+        words = re.sub("[^\w]"," ",phrase.lower()).split()
         for word in words:
             if word not in words_searched.keys():
                 words_searched[word] = 1
@@ -94,4 +94,4 @@ def pages(filepath):
 
 
 # run
-run(host='127.0.0.1',port=80,debug=True)
+run(host='lolcalhost',port=8080,debug=True)
