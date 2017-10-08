@@ -25,7 +25,8 @@ def handleSearchWords(phrase):
                 words_searched[word] += 1
     return get_top_words()
 
-	
+
+#Returns list of words without whitespace and all lowercase
 def calculate(inputText):
 	wordList = re.sub("[^\w]", " ",  inputText).split()	
 	storedData={}
@@ -47,6 +48,7 @@ def show_index():
 	insertionOrderList = re.sub("[^\w]", " ",  search_query[0]).split()
 	theList = []
         for word in insertionOrderList:
+            word = word.lower()
             if word not in theList:
         	    theList.append(word)
         calculated = calculate(search_query[0])
@@ -92,4 +94,4 @@ def pages(filepath):
 
 
 # run
-run(host='localhost',port=8080,debug=True)
+run(host='127.0.0.1',port=80,debug=True)

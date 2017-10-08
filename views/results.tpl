@@ -44,6 +44,8 @@
                         <th class="text-center">Count</th>
                     </tr>
                     </thead>
+
+		    <!-- Created table of keywords searched and the number of times they appeared -->
                     <tbody>
                     % for x in range(0,len(insertionOrderList)):
                         <tr>
@@ -58,7 +60,7 @@
 				
 				
 				
-				
+		<!-- Creates table to display top 20 most searched words -->		
                 % if bool(top_words):
                     <h2 class="text-primary">Search History</h2>
                     <table class="table table-condensed text-center" id="history">
