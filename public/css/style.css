@@ -10,4 +10,15 @@
 
 .brand-text {
     font-family: 'Satisfy', cursive;
+    font-size: 20px;
+    margin-top: 15px;
+}
+
+#dp {
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+.navbar-brand {
+    padding-top: 8px;
 }
