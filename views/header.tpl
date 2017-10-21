@@ -47,7 +47,8 @@
                             % if bool(userData['picture']):
                                 <li class="active">\\
                                     % link = userData['link'] if bool(userData['link']) else 'javascript:void();'
-                                    <a href="{{link}}" id="dp" title="Google+" target="_blank">\\
+                                    % _blank = '_blank' if bool(userData['link']) else '_self'
+                                    <a href="{{link}}" id="dp" title="Google+" target="{{_blank}}">\\
                                         % pic = userData['picture']
                                         <img src="{{pic}}" alt="Profile" width="40px" height="40px" class="img-circle img-responsive">
                                     </a>

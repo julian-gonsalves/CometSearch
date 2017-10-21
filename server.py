@@ -157,7 +157,7 @@ def retrieve_user_data(credential):
     # Get user {email, name, family_name, given_name, picture, id, link, verified_email}
     users_service = build('oauth2', 'v2', http=http)
     user_document = users_service.userinfo().get().execute()
-    user_email = user_document['email']
+    user_document['link'] = None
     return user_document
 # *********************** END Helper Functions *************************
 
