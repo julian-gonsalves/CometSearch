@@ -125,7 +125,7 @@ def calculate(inputText):
 
 
 def sign_in():
-    flow = flow_from_clientsecrets('client_secrets.json', scope='https://www.googleapis.com/auth/plus.me https://www.googleapis.com/auth/userinfo.email', redirect_uri='http://localhost:8080')
+    flow = flow_from_clientsecrets('client_secrets.json', scope='https://www.googleapis.com/auth/plus.me https://www.googleapis.com/auth/userinfo.email', redirect_uri='http://ec2-34-227-189-125.compute-1.amazonaws.com')
     uri = flow.step1_get_authorize_url()
     redirect(str(uri))
 
@@ -148,7 +148,7 @@ def handle_redirect(code, current_session):
     redirect("/")
 
 def get_credentials(code):
-    flow = flow_from_clientsecrets('client_secrets.json', scope='https://www.googleapis.com/auth/plus.me https://www.googleapis.com/auth/userinfo.email', redirect_uri='http://localhost:8080')
+    flow = flow_from_clientsecrets('client_secrets.json', scope='https://www.googleapis.com/auth/plus.me https://www.googleapis.com/auth/userinfo.email', redirect_uri='http://ec2-34-227-189-125.compute-1.amazonaws.com')
     return flow.step2_exchange(code)
 
 def retrieve_user_data(credential):
@@ -242,5 +242,5 @@ def pages(filepath):
 
 
 # ******************* START Application Server Run *********************
-run(app=app, host='localhost',port=8080,debug=True)
+run(app=app, host='0.0.0.0',port=80,debug=True)
 # ******************** END Application Server Run **********************

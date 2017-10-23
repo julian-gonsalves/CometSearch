@@ -10,17 +10,19 @@ conn = boto.ec2.connect_to_region('us-east-1',
     )
 
 # Make key pair
-if (not conn.get_key_pair('cometSearchKey')):
+try:
     newKey = conn.create_key_pair('cometSearchKey')
     # save new key
     if(not newKey.save('')):
         exit()
+except:
+    pass
 
 # Create security group
-sec_group = conn.get_all_security_groups(groupnames=['cometDev'])
-if(not sec_group):
+try:
     sec_group = conn.create_security_group(name='cometDev',description='Authorized to develop')
-else:
+except:
+    sec_group = conn.get_all_security_groups(groupnames=['cometDev'])
     sec_group = sec_group[0]
 
 # Authorize port access
@@ -45,23 +47,26 @@ reservations = conn.get_all_instances()
 if (not reservations):
     reservations = conn.run_instances(image_id='ami-6cd01a16', instance_type='t2.micro', key_name='cometSearchKey', security_groups=['cometDev'])
 else:
-    reservations = reservations[0]
+    reservations
 
 # get instance states
-for instance in reservations.instances:
-    print 'Instance {0} - {1} is {2} at {3} (initial)'.format(instance.instance_type,instance.image_id,instance.state,instance.ip_address)
+for reservation in reservations:
+    for instance in reservation.instances:
+        print 'Instance {0} - {1} is {2} at {3} ({4}) (initial) with group:'.format(instance.instance_type,instance.image_id,instance.state,instance.ip_address, instance.public_dns_name)
+        print "\t {0}".format(instance.groups[0].name)
 
-    if instance.state == 'running':
-        # Allocate Elastic IP
-        elastic_address = conn.get_all_addresses()
-        if(not elastic_address):
-            elastic_address = conn.allocate_address()
-            # Associate Elastic IP to instance
-            try:
-                elastic_address.associate(instance_id = instance.id)
-            except:
-                print 'EIP already associated'
-        else:
-            elastic_address = elastic_address[0]
+        """if instance.state == 'running':
+            # Allocate Elastic IP
+            elastic_address = conn.get_all_addresses()
+            if(not elastic_address):
+                elastic_address = conn.allocate_address()
+                # Associate Elastic IP to instance
+                try:
+                    elastic_address.associate(instance_id = instance.id)
+                except:
+                    print 'EIP already associated'
+            else:
+                elastic_address = elastic_address[0]
 
-        print 'Instance {0} - {1} is {2} at {3} (final)'.format(instance.instance_type,instance.image_id,instance.state,instance.ip_address)
+            print 'Instance {0} - {1} is {2} at {3} (final)'.format(instance.instance_type,instance.image_id,instance.state,instance.ip_address)
+    """
