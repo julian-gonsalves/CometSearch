@@ -10,17 +10,19 @@ conn = boto.ec2.connect_to_region('us-east-1',
     )
 
 # Make key pair
-if (not conn.get_key_pair('cometSearchKey')):
+try:
     newKey = conn.create_key_pair('cometSearchKey')
     # save new key
     if(not newKey.save('')):
         exit()
+except:
+    pass
 
 # Create security group
-sec_group = conn.get_all_security_groups(groupnames=['csc326-group24'])
-if(not sec_group):
+try:
     sec_group = conn.create_security_group(name='csc326-group24',description='For submission and running tests')
-else:
+except:
+    sec_group = conn.get_all_security_groups(groupnames=['csc326-group24'])
     sec_group = sec_group[0]
 
 # Authorize port access
