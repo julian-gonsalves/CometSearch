@@ -36,7 +36,7 @@ def get_db_data(table, limit, desc=False, include_score=False):
 # ******************** START Session Config ****************************
 session_opts = {
     'session.type': 'file',
-    'session.cookie_expires': 20000,
+    'session.cookie_expires': False,
     'session.data_dir': './data',
     'session.auto': True
 }
