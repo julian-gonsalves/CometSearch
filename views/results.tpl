@@ -1,17 +1,46 @@
 % include('header.tpl', title=search_query + ' - Comet',userData = userData)
-
+% totalpages=0
+% pagenum = 0
+% setdefault('search_query', '')
 <div class="container-fluid">
     <div class='row'>
-        <div class="col-md-8 col-sm-8 col-xs-10 col-md-offset-2 col-sm-offset-2 col-xs-offset-1">
-            <div class="well">
-                <p class="text-left">Your search query was:
-                % if defined('search_query'):
-                    <blockquote>
-                    {{search_query}}
-                    </blockquote></p>
-                % end
+        <form method="GET" class="text-center">
+            <div class="col-md-6 col-sm-6 col-xs-10 col-md-offset-2 col-sm-offset-2 col-xs-offset-1">
+                <div class="form-group">
+                    <input type="text" name="keywords" value="{{search_query}}" class="form-control input-lg" placeholder="type your search query here">
+                </div>
             </div>
-
+            <button type="submit" class="col-sm-2 btn btn-primary btn-lg"><span class="glyphicon glyphicon-search"></span> Search</button>
+        </form> 
+    </div>
+    <div class='row'>
+        <div class="col-md-8 col-sm-8 col-xs-10 col-md-offset-2 col-sm-offset-2 col-xs-offset-1">
+            <br>
+            <h2 class="text-primary">Search Results</h2>
+            % if results:                
+                <ul class="sync-pagination pagination-sm"></ul>
+                <div id="pageContent" class="well well-sm">
+                % results_list, totalpages, pagenum = results
+                % for item in results_list:
+                    % docid = item[0]
+                    % url = item[1]
+                    % title = item[2]
+                    % description = item[3]
+                    % rank = item[4]
+                    <div class="panel panel-default">
+                        <div class="panel-body">
+                            <a class='text-primary' href='{{url}}'><h4>{{title}}</h4></a>
+                            <small class='text-success'>{{url}}</small>
+                        </div>
+                    </div>
+                % end
+                </div>
+                <ul class="sync-pagination pagination-sm"></ul>
+            % else:
+                <div class="alert alert-warning" role="alert">
+                    <i class="glyphicon glyphicon-comment"></i> <strong>Sorry!</strong> No Links Found.
+                </div>
+            % end
             <h2 class="text-primary">Word Count</h2>
             <table class="table table-condensed text-center" id="results">
                 <thead>
@@ -82,4 +111,4 @@
         </div>
     </div>
 </div>
-% include('footer.tpl') 
+% include('footer.tpl',totalpages=totalpages) 

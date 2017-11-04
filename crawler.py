@@ -25,6 +25,8 @@ from BeautifulSoup import *
 from collections import defaultdict
 import re
 import copy
+import MySQLdb as db
+from pagerank import page_rank
 
 def attr(elem, attr):
     """An html attribute from an html element. E.g. <a href="">, then
@@ -47,6 +49,9 @@ class crawler(object):
     def __init__(self, db_conn, url_file):
         """Initialize the crawler with a connection to the database to populate
         and with the file containing the list of seed URLs to begin indexing."""
+        # establish db connection
+        self.conn = db_conn
+
         self._url_queue = [ ]
 
         # Document Id Cache: Stores all url and their respective document id
@@ -61,8 +66,17 @@ class crawler(object):
         # Lexicon Cache: Stores all words and their respective word id
         self._word_id_cache = { }
 
+        # Forward Index: Links documents to words and their hit list
+        self._forward_index = defaultdict(dict)
+
         # Inverted Index: Links words to every document in which they occur
         self._inverted_index = { }
+
+        # Links cache: a list of how outgoing and incoming urls are connected by using docids
+        self._links = []
+
+        # Page Rank: Stores docid and its rank
+        self._page_rank = None
 
         # functions to call when entering and exiting specific tags
         self._enter = defaultdict(lambda *a, **ka: self._visit_ignore)
@@ -147,7 +161,7 @@ class crawler(object):
     
     # TODO remove me in real version
     def _mock_insert_word(self, word):
-        """A function that pretends to inster a word into the lexicon db table
+        """A function that pretends to insert a word into the lexicon db table
         and then returns that newly inserted word's id."""
         ret_id = self._mock_next_word_id
         self._mock_next_word_id += 1
@@ -162,8 +176,20 @@ class crawler(object):
         #          word is in the lexicon
         #       2) query the lexicon for the id assigned to this word, 
         #          store it in the word id cache, and return the id.
+        c = self.conn.cursor()
+        word_id = -1
+        try:
+            # try adding word to lexicon
+            c.execute("insert into lexicon(word) values (%s)", (word,))
+            self.conn.commit()
+            word_id =  c.lastrowid
+        except db.IntegrityError:
+            # word already exists so get it's id
+            c.execute("select id from lexicon where word=%s limit 1", (word,))
+            for row in c:
+                word_id = row[0]
 
-        word_id = self._mock_insert_word(word)
+        #word_id = self._mock_insert_word(word)
         self._word_id_cache[word] = word_id
         return word_id
     
@@ -176,7 +202,20 @@ class crawler(object):
         #       doesn't exist in the db then only insert the url and leave
         #       the rest to their defaults.
         
-        doc_id = self._mock_insert_document(url)
+        c = self.conn.cursor()
+        doc_id = -1
+        try:
+            # try adding word to lexicon
+            c.execute("insert into documentIndex(url) values (%s)", (url,))
+            self.conn.commit()
+            doc_id =  c.lastrowid
+        except db.IntegrityError:
+            # word already exists so get it's id
+            c.execute("select id from documentIndex where url=%s limit 1", (url,))
+            for row in c:
+                doc_id = row[0]
+
+        #doc_id = self._mock_insert_document(url)
         self._doc_id_cache[url] = doc_id
         return doc_id
 
@@ -211,6 +250,13 @@ class crawler(object):
         """Add a link into the database, or increase the number of links between
         two pages in the database."""
         # TODO
+        self._links.append((from_doc_id,to_doc_id))
+        try:
+            c = self.conn.cursor()
+            c.execute("insert into links(docidFrom,docidTo) values(%s,%s)",(from_doc_id,to_doc_id,))
+            self.conn.commit()
+        except db.Error as e:
+            print "An error occurred:", e.args[0]
 
     def _visit_title(self, elem):
         """Called when visiting the <title> tag."""
@@ -219,6 +265,13 @@ class crawler(object):
 
         # TODO update document title for document id self._curr_doc_id
         self._title_cache[self._curr_doc_id] = title_text
+
+        try:
+            c = self.conn.cursor()
+            c.execute("update documentIndex set title = %s where id=%s",(title_text,self._curr_doc_id))
+            self.conn.commit()
+        except db.Error as e:
+            print "An error occurred:", e.args[0]
     
     def _visit_a(self, elem):
         """Called when visiting <a> tags."""
@@ -245,13 +298,28 @@ class crawler(object):
         #       database for this document
         print "    num words="+ str(len(self._curr_words))
 
-    def _add_document_to_words(self):
-        """Update inverted index by linking current document id to every word in current words"""
-        for (curr_word_id,its_font_size) in self._curr_words:
-            #if word_id does not exist in inverted index, initialize set
-            if curr_word_id not in self._inverted_index:
-                self._inverted_index[curr_word_id] = set()
-            self._inverted_index[curr_word_id].add(self._curr_doc_id)
+        c = self.conn.cursor()
+        for (wordid, importance) in self._curr_words:
+            if wordid not in self._forward_index[self._curr_doc_id]:
+                self._forward_index[self._curr_doc_id][wordid] = []
+            self._forward_index[self._curr_doc_id][wordid].append(importance)
+        
+            # build hitlist
+            try:
+                c.execute("insert into hitlist(docid,wordid,importance) values(%s,%s,%s)",(self._curr_doc_id,wordid,importance))
+            except db.Error as e:
+                print "An error occurred:", e.args[0]
+        self.conn.commit()
+            
+
+
+    # def _add_document_to_words(self):
+    #     """Update inverted index by linking current document id to every word in current words"""
+    #     for (curr_word_id,its_font_size) in self._curr_words:
+    #         #if word_id does not exist in inverted index, initialize set
+    #         if curr_word_id not in self._inverted_index:
+    #             self._inverted_index[curr_word_id] = set()
+    #         self._inverted_index[curr_word_id].add(self._curr_doc_id)
 
 
 
@@ -373,13 +441,20 @@ class crawler(object):
                 self._curr_doc_id = doc_id
                 self._font_size = 0
                 self._curr_words = [ ]
+                # Traverse url 
                 self._index_document(soup)
-                self._add_words_to_document()
-                self._add_document_to_words()
+                self._add_words_to_document() # build forward index with hit list
                 print "    url="+repr(self._curr_url)
 
                 # reset page description recording flag
                 self._curr_page_description_flag = False
+                # save page description
+                try:
+                    c = self.conn.cursor()
+                    c.execute("update documentIndex set description = %s where id=%s",(self._pg_cache[self._curr_doc_id],self._curr_doc_id))
+                    self.conn.commit()
+                except:
+                    pass
 
             except Exception as e:
                 print e
@@ -387,6 +462,25 @@ class crawler(object):
             finally:
                 if socket:
                     socket.close()
+    def build_inverted_index(self):
+        # build index
+        try:
+            c = self.conn.cursor()
+            for wordid in self.get_inverted_index():                
+                c.executemany("insert into invertedIndex(docid,wordid) values(%s,{0})".format(wordid),
+                    [(docid,) for docid in list(self._inverted_index[wordid])])
+                self.conn.commit()
+        except db.Error as e:
+            print "An error occurred:", e.args[0]
+
+    def rank_all(self):
+        self._page_rank = page_rank(links = self._links)
+        try:
+            c = self.conn.cursor()
+            c.executemany("insert into pagerank(docid,rank) values(%s,%s)", self._page_rank.items())
+            self.conn.commit()
+        except:
+            pass
 
     def get_lexicon(self):
         """returns a mapping of a word with its id as a dict"""
@@ -396,10 +490,18 @@ class crawler(object):
         """returns a mapping of a document id with a tuple of its url and title as a dict"""
         return {doc_id:(doc_url, self._title_cache[doc_id], self._pg_cache[doc_id]) for (doc_url, doc_id) in self._doc_id_cache.items()}
 
+    def get_links(self):
+        """returns the relation between incoming and outgoing urls"""
+        return self._links
+
     def get_inverted_index(self):
         """returns the inverted index in a dict()"""
+        for docid in self._forward_index:
+            for wordid in self._forward_index[docid]:
+                if wordid not in self._inverted_index:
+                    self._inverted_index[wordid] = set()
+                self._inverted_index[wordid].add(docid)
         return self._inverted_index
-
 
     def get_resolved_inverted_index(self):
         """returns the inverted index in a dict() where word ids
@@ -412,5 +514,35 @@ class crawler(object):
         return (self._title_cache[doc_id],self._pg_cache[doc_id])
 
 if __name__ == "__main__":
-    bot = crawler(None, "test_urls.txt")
+    # Setup database connection
+    conn = db.connect(host = "comet-mysql-east1.cxtfibfzhdya.us-east-1.rds.amazonaws.com",
+                    user = "cometDev", passwd= "mycometdev", db = "cometDev", port=3306)
+    c = conn.cursor()
+
+    # Create tables for data structures if they do not exist
+    # documentIndex
+    c.execute('''CREATE TABLE IF NOT EXISTS documentIndex
+             (id int unsigned AUTO_INCREMENT, url varchar(250), title varchar(250), description text, primary key (id), unique (url))''')
+    # Lexicon
+    c.execute('''CREATE TABLE IF NOT EXISTS lexicon
+             (id int unsigned AUTO_INCREMENT, word varchar(250), primary key (id), unique (word))''')
+    # Hitlist
+    c.execute('''CREATE TABLE IF NOT EXISTS hitlist
+             (id int unsigned AUTO_INCREMENT, docid int unsigned, wordid int unsigned, importance int unsigned, primary key (id))''')
+    # Index
+    c.execute('''CREATE TABLE IF NOT EXISTS invertedIndex
+             (id int unsigned AUTO_INCREMENT, docid int unsigned, wordid int unsigned, nhits int unsigned, primary key (id))''')
+    # links
+    c.execute('''CREATE TABLE IF NOT EXISTS links
+             (docidFrom int unsigned, docidTo int unsigned)''')
+    # pagerank
+    c.execute('''CREATE TABLE IF NOT EXISTS pagerank
+             (docid int unsigned, rank float unsigned, primary key (docid))''')
+    conn.commit()
+
+
+    bot = crawler(db_conn=conn, url_file="urls.txt")
     bot.crawl(depth=1)
+    bot.build_inverted_index()
+    bot.rank_all()
+    conn.close()

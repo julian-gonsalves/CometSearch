@@ -1,3 +1,0 @@
-[submodule "google-api-python-client"]
-	path = google-api-python-client
-	url = git://github.com/google/google-api-python-client.git

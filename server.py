@@ -1,11 +1,12 @@
-import operator, re, httplib2, time
-from bottle import route, run, static_file,view, get,post, template, request, redirect, app
+import operator, re, httplib2, time, math, pickle
+from bottle import route, run, static_file,view, get,post, template, request, redirect, app, PasteServer, error
 from oauth2client.client import OAuth2WebServerFlow
 from oauth2client.client import flow_from_clientsecrets
 from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
 from beaker.middleware import SessionMiddleware
 import redis
+import MySQLdb
 
 # *********************** START Redis DB *******************************
 db = redis.Redis(host='localhost')
@@ -44,8 +45,114 @@ app = SessionMiddleware(app(), session_opts)
 # ********************* END Session Config *****************************
 
 
+# ************************* START MySQL DB *****************************
+# Setup database connection
+def get_connection():
+    return MySQLdb.connect(host = "comet-mysql-east1.cxtfibfzhdya.us-east-1.rds.amazonaws.com",
+                    user = "cometDev", passwd= "mycometdev", db = "cometDev", port=3306)
+
+# Control word search
+def check_db(word,current_session,conn):
+    word_id = get_word_id(word,conn)
+    if word_id == -1:
+        return False
+    doc_ids = lookup_invereted_index(word_id,conn)
+    if not doc_ids:
+        return False
+    documentsinfo = get_document(doc_ids,conn)
+    if not documentsinfo:
+        return False
+    # Now store somewhere relative to the session
+    pickledInfo = pickle.dumps(documentsinfo)
+    return store_results(pickledInfo, current_session.id, len(documentsinfo),conn)
+
+# gets the word id from lexicon
+def get_word_id(word,conn):
+    c = conn.cursor()
+    try:
+        c.execute('''select id from lexicon where word=%s''', (word,))
+        if not c.rowcount:
+            # no word found
+            print "ERROR: The word {0} doesn't exist in the lexicon".format(word)
+            return -1
+        result = c.fetchone()
+        return result[0]
+    except MySQLdb.Error as e:
+        print "An error occurred:", e.args
+        print "ERROR: Unable to get word id for {0}".format(word)
+        return -1
+
+# gets all docids from inverted index given a word
+def lookup_invereted_index(wordid,conn):
+    c = conn.cursor()
+    try:
+        c.execute('''select distinct docid from invertedIndex where wordid=%s''', (wordid,))
+        if not c.rowcount:
+            # no docids found
+            print "ERROR: The wordid {0} doesn't exist in invereted index".format(wordid)
+            return None
+        results = c.fetchall()
+        return [int(result[0]) for result in results]
+    except MySQLdb.Error as e:
+        print "An error occurred:", e.args
+        print "ERROR: Unable to get doc ids for {0}".format(wordid)
+        return None
+
+def get_document(docids,conn):
+    c = conn.cursor()
+    try:
+        sql='''select docid, url, title, description, rank from documentIndex right join pagerank on id=docid  WHERE id IN (%s) order by rank desc''' 
+        in_p=', '.join(map(lambda x: '%s', docids))
+        sql = sql % in_p
+        print sql, docids
+        c.execute(sql, docids)
+        if not c.rowcount:
+            # no documentinfo found
+            print "ERROR: document information not found"
+            return None
+        results = c.fetchall()
+        return [(result[0],result[1],result[2],result[3],result[4]) for result in results]
+    except MySQLdb.Error as e:
+        print "An error occurred:", e.args
+        print "ERROR: Unable to resolve docids"
+        return None
+
+# Store pickled search results
+def store_results(results, sessionkey,totalNum,conn):
+    c = conn.cursor()
+    try:
+        c.execute('''select sessionID from searchResults where sessionID = %s''', (sessionkey,))
+        if c.rowcount:
+            c.execute('''update searchResults set searchResult = %s, totalNum = %s  where sessionID = %s''', (results,totalNum,sessionkey,))
+        else:
+            c.execute('''insert into searchResults(sessionID, searchResult,totalNum) values(%s,%s,%s) ''', (sessionkey,results,totalNum))
+        conn.commit()
+        return True
+    except MySQLdb.Error as e:
+        print "An error occurred:", e.args
+        print "ERROR: Could not save search results"
+        return False
+
+# get pickled search results
+def get_results(sessionkey,conn):
+    c = conn.cursor()
+    try:
+        c.execute('''select searchResult,totalNum from searchResults where sessionID = %s''', (sessionkey,))
+        if not c.rowcount:
+            # no searchResults found
+            print "ERROR: document information not found"
+            return None
+        result = c.fetchone()
+        return result[0], result[1]
+    except MySQLdb.Error as e:
+        print "An error occurred:", e.args
+        print "ERROR: Unable to get search Results"
+        return None
+# ************************** END MySQL DB ******************************
+
+
 # ******************* START Helper Functions ***************************
-def handle_search_words(phrase, current_session):
+def handle_search_words(phrase, current_session,conn):
     """ 
     returns multiple lists and dictionary
     top_words: top 20 most searched words as a list
@@ -86,8 +193,14 @@ def handle_search_words(phrase, current_session):
 
     # get word count
     word_count = calculate(phrase)
+
+    if check_db(words[0],current_session,conn):
+        results = paginate_search_results(1,current_session,conn)
+    else:
+        results = None
+
     
-    return (top_words, recent_queries, insertion_order_list, word_count)
+    return (top_words, recent_queries, insertion_order_list, word_count, results)
 
 
 def get_recent_queries(current_session):
@@ -122,6 +235,18 @@ def calculate(inputText):
         else:
             storedData[word] = 1
     return storedData
+
+
+# paginate search results and return at most n results
+def paginate_search_results(page,current_session,conn):
+    N = 5 #number of links per page
+    page = int(page)
+    pickled_results,total_num = get_results(current_session.id,conn)
+    results = pickle.loads(pickled_results)
+    total_pages = int(math.ceil(float(total_num)/N))
+    start_index = (page-1)*N
+    end_index = (page*N) if (page*N) < total_num else total_num
+    return results[start_index:end_index], total_pages, page
 
 
 def sign_in():
@@ -174,15 +299,25 @@ def show_index():
 
     if bool(request.query.keywords):
         search_query = request.query.getall("keywords")
-        top_words, recent_queries,insertion_order_list,calculated = handle_search_words(search_query[0], current_session=current_session)
+        conn = get_connection()
+        top_words, recent_queries,insertion_order_list,calculated,rs = handle_search_words(search_query[0],current_session,conn)
+        conn.close()
         return template('results', 
             insertion_order_list = insertion_order_list, 
             calculated = calculated,
             top_words=top_words,
             recent_queries = recent_queries,
             search_query=search_query[0],
-            userData = current_session['user']
+            userData = current_session['user'],
+            results = rs
         )
+    
+    elif bool(request.query.page):
+        page_num = search_query = request.query.getall("page")
+        conn = get_connection()
+        results = paginate_search_results(page_num[0],current_session,conn)
+        conn.close()
+        return template('paginate', results=results)
 
     elif bool(request.query.signin):
         #redirect to google authorization server
@@ -201,6 +336,13 @@ def show_index():
         # Handle all other get scenarios
         return template('index', userData = current_session['user'])
 # ********************* END Index Route Handling ***********************
+
+
+# *********************** START Error Routes ***************************
+@error(404)
+def error404(error):
+    return template('error404')
+# ************************* END Error Routes ***************************
 
 
 # ********************** START Static Routes ***************************
@@ -242,5 +384,5 @@ def pages(filepath):
 
 
 # ******************* START Application Server Run *********************
-run(app=app, host='0.0.0.0',port=80,debug=True)
+run(app, host='localhost', port=8080, debug=True, server=PasteServer)
 # ******************** END Application Server Run **********************
