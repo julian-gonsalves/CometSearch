@@ -380,9 +380,21 @@ def test():
 def pages(filepath):
     """ Returns static html test pages """
     return static_file(filepath, root='public/test_html/')
+
+
+@route('/testpage')
+def test():
+    """ Returns static index page with links to all other test pages """
+    return static_file('indexed.html', root='public/test_page/')
+
+
+@route('/testpage/<filepath:re:.*\.html>')
+def pages(filepath):
+    """ Returns static html test pages """
+    return static_file(filepath, root='public/test_page/')
 # ********************** END Crawler Test Routes ***********************
 
 
 # ******************* START Application Server Run *********************
-run(app, host='localhost', port=8080, debug=True, server=PasteServer)
+run(app, host='localhost', port=8080, server=PasteServer)
 # ******************** END Application Server Run **********************

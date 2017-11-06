@@ -10,15 +10,33 @@ import MySQLdb as db
 from pagerank import page_rank
 import pprint
 
+def reset_db(conn):
+    c = conn.cursor()
+    try:
+        c.execute('''drop table  documentIndex''')
+        c.execute('''drop table  hitlist''')
+        c.execute('''drop table  invertedIndex''')
+        c.execute('''drop table  lexicon''')
+        c.execute('''drop table  links''')
+        c.execute('''drop table  pagerank''')
+        conn.commit()
+        return True
+    except db.Error as e:
+        print "An error occurred:", e.args
+        print "ERROR: Unable to reset db"
+        return False
+
+
+
+
 
 ##use this to find doc url/name
 def get_document(docids,conn):
     c = conn.cursor()
     try:
-        sql='''select docid, url, title, description, rank from documentIndex right join pagerank on id=docid  WHERE id IN (%s) order by rank desc''' 
+        sql='''select docid, url, title, description, rank from documentIndex left join pagerank on id=docid  WHERE id IN (%s) order by rank desc''' 
         in_p=', '.join(map(lambda x: '%s', docids))
         sql = sql % in_p
-        print sql, docids
         c.execute(sql, docids)
         if not c.rowcount:
             # no documentinfo found
@@ -50,6 +68,9 @@ if __name__ == "__main__":
     # Setup database connection
     conn = db.connect(host = "comet-mysql-east1.cxtfibfzhdya.us-east-1.rds.amazonaws.com",
                     user = "cometDev", passwd= "mycometdev", db = "cometTest", port=3306)
+    if not reset_db(conn):
+        quit()
+    
     c = conn.cursor()
 
     # Create tables for data structures if they do not exist
@@ -84,25 +105,9 @@ if __name__ == "__main__":
     print "___________________"
     pp = pprint.PrettyPrinter(indent = 1)
     zzz = bot._page_rank.items()
-    qqq = []
-    for pair in zzz:
-		qqq.append(tuple((pair[0],pair[1])))
-	
-		
-    #pp.pprint(qqq)
-    #print "___________________"
-    #print "___________________"
-	##
-	
-	
-	##print doc title and rank
-    www = []
-    for j in range(0,len(qqq)):
-        www.append(((qqq[j])[0]))
+    qqq = [pair[0] for pair in zzz]
 
-    bbb = []
-    for t in range(0,len(www)):
-    	bbb.append(tuple((get_document(www,conn)[t][2],qqq[t][1])))
+    bbb = [(info[2],info[4]) for info in get_document(qqq,conn)]
                 
     pp.pprint(bbb)
 	

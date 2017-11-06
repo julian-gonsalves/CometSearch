@@ -513,10 +513,28 @@ class crawler(object):
         """returns a page title and page description as a tuple"""
         return (self._title_cache[doc_id],self._pg_cache[doc_id])
 
+    def reset_db(conn):
+    c = conn.cursor()
+    try:
+        c.execute('''drop table  documentIndex''')
+        c.execute('''drop table  hitlist''')
+        c.execute('''drop table  invertedIndex''')
+        c.execute('''drop table  lexicon''')
+        c.execute('''drop table  links''')
+        c.execute('''drop table  pagerank''')
+        conn.commit()
+        return True
+    except db.Error as e:
+        print "An error occurred:", e.args
+        print "ERROR: Unable to reset db"
+        return False
+
 if __name__ == "__main__":
     # Setup database connection
     conn = db.connect(host = "comet-mysql-east1.cxtfibfzhdya.us-east-1.rds.amazonaws.com",
                     user = "cometDev", passwd= "mycometdev", db = "cometDev", port=3306)
+    if not reset_db(conn):
+        quit()
     c = conn.cursor()
 
     # Create tables for data structures if they do not exist
