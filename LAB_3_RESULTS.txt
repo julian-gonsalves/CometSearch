@@ -1,0 +1,149 @@
+----------------BENCHMARK RESULTS------------------------
+
+Several tests were run using Apache Benchmarking Tool to stress the system and determine server stability
+
+The following ab commands were run in order:
+
+Simplest Scenario - 1 active user with 1000 requests
+ab -n 1000 34.227.189.125/?keywords=Key+word/
+------------Results-------------
+Time Taken: 4.140 seconds
+Failed: 0
+Requests per second (RPS): 24.16
+Latency: 1ms
+Total time: 41ms
+
+Slightly More Concurrent Users - 10/11/12
+ab -n 1000 -c 10 34.227.189.125/?keywords=Key+word+here/
+------------Results-------------
+Time Taken: 21.902 seconds
+Failed: 0
+Requests per second (RPS): 45.66
+Latency: 1s
+Total time: 219ms
+
+ab -n 1000 -c 10 34.227.189.125/?keywords=Key+word+here/
+------------Results-------------
+Time Taken: 22.855 seconds
+Failed: 0
+Requests per second (RPS): 43.75
+Latency: 1s
+Total time: 227ms
+
+ab -n 1000 -c 11 34.227.189.125/?keywords=Key+word+here/
+------------Results-------------
+Time Taken: 23.585 seconds
+Failed: 0
+Requests per second (RPS): 42.40
+Latency: 1ms
+Total time: 259ms
+
+ab -n 1000 -c 11 34.227.189.125/?keywords=Key+word+here/
+------------Results-------------
+Time Taken: 24.188 seconds
+Failed: 0
+Requests per second (RPS): 41.34
+Latency: 1ms
+Total time: 265ms
+
+ab -n 1000 -c 12 34.227.189.125/?keywords=Key+word+here/
+------------Results-------------
+Time Taken: 26.206 seconds
+Failed: 0
+Requests per second (RPS): 38.16
+Latency: 1ms
+Total time: 314ms
+
+ab -n 1000 -c 20 34.227.189.125/?keywords=Key+word+here/
+------------Results-------------
+Time Taken: 26.485 seconds
+Failed: 0
+Requests per second (RPS): 37.76
+Latency: 1ms
+Total time: 526ms
+
+ab -n 1000 -c 50 34.227.189.125/?keywords=Key+word+here/
+------------Results-------------
+Time Taken: 27.792 seconds
+Failed: 0
+Requests per second (RPS): 35.98
+Latency: 1ms
+Total time: 1361ms
+
+ab -n 1000 -c 100 34.227.189.125/?keywords=Key+word+here/
+------------Results-------------
+Time Taken: 28.548 seconds
+Failed: 0
+Requests per second (RPS): 35.03
+Latency: 1ms
+Total time: 2726ms
+
+ab -n 1000 -c 500 34.227.189.125/?keywords=Key+word+here/
+------------Results-------------
+Time Taken: 29.213 seconds
+Failed: 0
+Requests per second (RPS): 34.23
+Latency: 12ms
+Total time: 10978ms
+
+ab -n 1000 -c 1000 34.227.189.125/?keywords=Key+word+here/
+------------Results-------------
+Time Taken: 30.273 seconds
+Failed: 0
+Requests per second (RPS): 33.03
+Latency: 33ms
+Total time: 15234ms
+
+ab -n 1010 -c 1010 34.227.189.125/?keywords=Key+word+here/
+------------Results-------------
+Time Taken: 35.537 seconds
+Failed: 0
+Requests per second (RPS): 28.42
+Latency: 34ms
+Total time: 19102ms
+
+ab -n 1020 -c 1020 34.227.189.125/?keywords=Key+word+here/
+------------Results-------------
+Time Taken: 33.923 seconds
+Failed: 0
+Requests per second (RPS): 30.07
+Latency: 34ms
+Total time: 16929ms
+
+ab -n 1020 -c 1020 34.227.189.125/?keywords=Key+word+here/
+------------Results-------------
+Time Taken: 35.615 seconds
+Failed: 0
+Requests per second (RPS): 28.64
+Latency: 34ms
+Total time: 18119ms
+
+ab -n 1020 -c 1020 34.227.189.125/?keywords=Key+word+here/
+------------Results-------------
+Time Taken: 35.615 seconds
+Failed: 0
+Requests per second (RPS): 28.64
+Latency: 34ms
+Total time: 18119ms
+
+-------------------------------------------------------------
+BEYOND THIS POINT CANNOT RUN HIGHER TESTS WITHOUT RECEIVING THE FOLLOWING ERROR:
+socket: Too many open files (24)
+It is evident that there are drastic improvements
+
+----------------CONCLUSIONS------------------------
+
+The maximum number of concurrent users at a time was 1020, a massive improvement over the previous 12 users.
+The average Latency seems to be approximately ~1ms until the number of concurrent users exceeded 100. Beyond that point, the latency increased slowly
+and at 1020 users, it capped at ~34ms.
+
+The maximum RPS @ max users (1020) seems to be approximately ~28.64/s. While this is significantly smaller, this is likely due to the multithreading
+of the requests, allowing the way they are handled to be more spread out across the threads.
+
+Ultimately, between Lab 2 and Lab 3 there have been massive improvements in performance. The main reason for this would be the use of the paste server.
+This is a multi threaded server and hence allows for more concurrent connections. This largely explains the benchmark results showing an increase from
+12 concurrent users to 1020. The results were stopped without achieving a true maximum, due to the following error: "Socket: too many open files(24)".
+This is due to the system itself having a hard limit on the # of file descriptors per user. While there are certain ways to get around this issue,
+(such as changing the upper limit or removing it entirely), It was deemed unecessary as it is evident that 1020 concurrent users is vastly superior to
+previous results and higher use of our server is extremely unlikely.
+
