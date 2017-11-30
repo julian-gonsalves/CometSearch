@@ -1,0 +1,7 @@
+Paste
+httplib2
+bottle
+google-api-python-client
+beaker
+mysqlclient
+redis
