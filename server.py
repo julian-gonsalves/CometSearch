@@ -5,12 +5,12 @@ from oauth2client.client import flow_from_clientsecrets
 from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
 from beaker.middleware import SessionMiddleware
-import redis
 import MySQLdb
+import redis
+
 
 # *********************** START Redis DB *******************************
 db = redis.Redis(host='localhost')
-# db.
 
 # add element to db set with score update
 def update_db(table, value, score, increment = False):
@@ -396,5 +396,5 @@ def pages(filepath):
 
 
 # ******************* START Application Server Run *********************
-run(app, host='localhost', port=8080, server=PasteServer)
+run(app, host='0.0.0.0', port=80, server=PasteServer)
 # ******************** END Application Server Run **********************

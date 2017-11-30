@@ -1,0 +1,65 @@
+----------------BENCHMARK RESULTS------------------------
+
+Several tests were run using Apache Benchmarking Tool to stress the system and determine server stability
+
+The following ab commands were run in order:
+
+Simplest Scenario - 1 active user with 1000 requests
+ab -n 100 34.227.189.125/?keywords=Key+word/
+------------Results-------------
+Time Taken: 0.429 seconds
+Failed: 0
+Requests per second (RPS): 233
+Latency: 0ms
+Total time: 4ms
+
+Slightly More Concurrent Users - 10/11/12
+ab -n 1000 -c 10 34.227.189.125/?keywords=Key+word+here/
+------------Results-------------
+Time Taken: 4.362 seconds
+Failed: 0
+Requests per second (RPS): 229.27
+Latency: 2ms
+Total time: 35ms
+
+ab -n 1000 -c 10 34.227.189.125/?keywords=Key+word+here/
+------------Results-------------
+Time Taken: 3.528 seconds
+Failed: 0
+Requests per second (RPS): 283.49
+Latency: 4ms
+Total time: 32ms
+
+ab -n 1000 -c 11 34.227.189.125/?keywords=Key+word+here/
+------------Results-------------
+Time Taken: 3.750 seconds
+Failed: 0
+Requests per second (RPS): 266.69
+Latency: 1ms
+Total time: 33ms
+
+ab -n 1000 -c 11 34.227.189.125/?keywords=Key+word+here/
+------------Results-------------
+Time Taken: 6.877 seconds
+Failed: 0
+Requests per second (RPS): 145.42
+Latency: 1ms
+Total time: 48ms
+
+ab -n 1000 -c 12 34.227.189.125/?keywords=Key+word+here/
+------------Results-------------
+Time Taken: 3.397 seconds
+Failed: 0
+Requests per second (RPS): 294.38
+Latency: 1ms
+Total time: 25ms
+
+
+----------------CONCLUSIONS------------------------
+
+The maximum number of concurrent users at a time was 12
+The average Latency seems to be approximately ~1ms
+The maximum RPS @ max users (12) seems to be approximately ~294.38/s
+
+The maximum users test was run 3 times and was only able to pass 1 of the three times.
+
