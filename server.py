@@ -5,6 +5,10 @@ from oauth2client.client import flow_from_clientsecrets
 from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
 from beaker.middleware import SessionMiddleware
+from query_comprehension import query_comprehension
+from query_comprehension import evaluate
+from spellcheck import SpellCheck
+
 import MySQLdb
 import redis
 
@@ -302,6 +306,11 @@ def show_index():
         conn = get_connection()
         top_words, recent_queries,insertion_order_list,calculated,rs = handle_search_words(search_query[0],current_session,conn)
         conn.close()
+	listOfWords = re.sub("[^\w]"," ",search_query[0].lower()).split()
+        spellChecker = []
+	for the_word in listOfWords:
+            spellChecker.append(SpellCheck(the_word))
+		
         return template('results', 
             insertion_order_list = insertion_order_list, 
             calculated = calculated,
@@ -309,7 +318,9 @@ def show_index():
             recent_queries = recent_queries,
             search_query=search_query[0],
             userData = current_session['user'],
-            results = rs
+            results = rs,
+	    spellChecked = spellChecker
+
         )
     
     elif bool(request.query.page):
@@ -396,5 +407,5 @@ def pages(filepath):
 
 
 # ******************* START Application Server Run *********************
-run(app, host='0.0.0.0', port=80, server=PasteServer)
+run(app, host='127.0.0.1', port=80, server=PasteServer)
 # ******************** END Application Server Run **********************

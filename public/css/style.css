@@ -22,3 +22,126 @@
 .navbar-brand {
     padding-top: 8px;
 }
+
+/*.animate {
+	width: 100px;
+    height: 100px;
+    background-color: transparent;
+    position: relative;
+    -webkit-animation-name: example; /* Safari 4.0 - 8.0 
+    -webkit-animation-duration: 6s; /* Safari 4.0 - 8.0 
+    animation-name: example;
+    animation-duration: 6s;
+	animation-iteration-count: infinite;
+	animation-timing-function: linear;
+}
+*/
+.what {
+	width: 7%;
+    height: 7%;
+    background-color: transparent;
+    position: relative;
+	z-index: 1;
+    -webkit-animation-name: whati; /* Safari 4.0 - 8.0 */
+    -webkit-animation-duration: 6s; /* Safari 4.0 - 8.0 */
+    animation-name: whati;
+    animation-duration: 6s;
+	animation-timing-function: linear;
+	animation-fill-mode: forwards;
+	overflow: hidden;
+}
+.what2 {
+	width: 7%;
+    height: 7%;
+    background-color: transparent;
+    position: relative;
+	z-index: 1;
+    -webkit-animation-name: whatq; /* Safari 4.0 - 8.0 */
+    -webkit-animation-duration: 6s; /* Safari 4.0 - 8.0 */
+    animation-name: whatq;
+    animation-duration: 6s;
+	animation-timing-function: linear;
+	animation-fill-mode: forwards;
+	overflow: hidden;
+}
+.the{
+	background-color: transparent;
+	position: fixed;
+	z-index: -1;
+	top: 70%;
+	left: 50%;
+	/* bring your own prefixes */
+	transform: translate(-50%, -70%);
+	
+	-webkit-animation-name: meteorpic; /* Safari 4.0 - 8.0 */
+    -webkit-animation-duration: 4s; /* Safari 4.0 - 8.0 */
+    animation-name: meteorpic;
+    animation-duration: 3s;
+	animation-delay: 6s;
+	opacity:0;
+	animation-timing-function: linear;
+	animation-fill-mode: forwards;
+}
+
+/*@keyframes example {
+    0%   {left:0px; top:0px;}
+	4%   {left:100px; top:25px;}
+	8%   {left:200px; top:50px;}
+	12%   {left:300px; top:75px;}
+	16%   {left:400px; top:100px;}
+	20%   {left:500px; top:125px;}
+	24%   {left:600px; top:150px; }
+	28%   {left:700px; top:175px;}
+	32%   {left:800px; top:200px;}
+	36%   {left:900px; top:225px;}
+	40%   {left:1000px; top:250px;}
+	
+	44%   {left:1100px; top:185px;}
+	48%   {left:1200px; top:125px;}
+	52%   {left:1100px; top:65px;}
+	
+	56%   {left:1000px; top:0px;}
+	60%   {left:900px; top:25px;}
+	64%   {left:800px; top:50px;}
+	68%   {left:700px; top:75px;}
+	72%   {left:600px; top:100px;}
+	76%   {left:500px; top:125px;}
+	80%   {left:400px; top:150px;}
+	84%   {left:300px; top:175px;}
+	88%   {left:200px; top:200px;}
+	92%   {left:100px; top:225px;}
+	96%   {left:0px; top:250px;}
+
+	
+	100%   {left:0px; top:0px;}
+
+}
+*/
+@keyframes whati {
+	0%   {left:6%; top:0px;}
+	20%   {left:6%; top:40px;}
+	40%   {left:6%; top:80px;}
+	60%   {left:6%; top:120px;}
+	80%   {left:6%; top:160px;}
+	100%   {left:6%; top:250px; opacity:0;}
+}
+@keyframes whatq {
+	0%   {left:6%; top:0px;}
+	20%   {left:6%; top:40px;}
+	40%   {left:6%; top:80px;}
+	60%   {left:6%; top:120x;}
+	80%   {left:6%; top:160px;opacity:0;}
+	100%   {left:6%; top:160px; opacity:0;}
+}
+@keyframes meteorpic {
+	0% {}
+	75% {}
+	100% {opacity:1;}
+}
+
+
+
+
+
+
+

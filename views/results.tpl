@@ -13,6 +13,14 @@
             <button type="submit" class="col-sm-2 btn btn-primary btn-lg"><span class="glyphicon glyphicon-search"></span> Search</button>
         </form> 
     </div>
+	<div>
+	<!--Display spellchecked search query -->
+		<span>Did you mean:
+		
+		%for i in range (0,len(spellChecked)):
+			{{spellChecked[i]}}
+		</span>
+	</div>
     <div class='row'>
         <div class="col-md-8 col-sm-8 col-xs-10 col-md-offset-2 col-sm-offset-2 col-xs-offset-1">
             <br>
