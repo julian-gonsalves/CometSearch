@@ -1,13 +1,10 @@
 import operator, re, httplib2, time, math, pickle
 from bottle import route, run, static_file,view, get,post, template, request, redirect, app, PasteServer, error
-from oauth2client.client import OAuth2WebServerFlow
-from oauth2client.client import flow_from_clientsecrets
+from oauth2client.client import OAuth2WebServerFlow,flow_from_clientsecrets
 from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
 from beaker.middleware import SessionMiddleware
-from query_comprehension import query_comprehension
-from query_comprehension import evaluate
-#from spellcheck import SpellCheck
+from query_comprehension import query_comprehension, evaluate
 
 import MySQLdb
 import redis

@@ -522,6 +522,7 @@ class crawler(object):
         c.execute('''drop table  lexicon''')
         c.execute('''drop table  links''')
         c.execute('''drop table  pagerank''')
+        c.execute('''drop table  searchResults''')
         conn.commit()
         return True
     except db.Error as e:
@@ -534,7 +535,7 @@ if __name__ == "__main__":
     conn = db.connect(host = "comet-mysql-east1.cxtfibfzhdya.us-east-1.rds.amazonaws.com",
                     user = "cometDev", passwd= "mycometdev", db = "cometDev", port=3306)
     if not reset_db(conn):
-        quit()
+        print "Tables don't exist"
     c = conn.cursor()
 
     # Create tables for data structures if they do not exist
@@ -556,6 +557,16 @@ if __name__ == "__main__":
     # pagerank
     c.execute('''CREATE TABLE IF NOT EXISTS pagerank
              (docid int unsigned, rank float unsigned, primary key (docid))''')
+    #searchResults
+    c.execute('''CREATE TABLE IF NOT EXISTS `searchResults` (
+            id int(10) unsigned NOT NULL AUTO_INCREMENT,
+            sessionID varchar(250) NOT NULL,
+            searchResult text NOT NULL,
+            dateAdded timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            totalNum int(10) unsigned NOT NULL DEFAULT '0',
+            PRIMARY KEY (`id`)
+            )''')
+             
     conn.commit()
 
 

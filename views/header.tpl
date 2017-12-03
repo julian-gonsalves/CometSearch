@@ -37,7 +37,7 @@
                     
                     % if not bool(userData):
                         <form  class="navbar-form navbar-right">
-                            <a href="/?signin=Yes" class="btn btn-primary">Sign in</a>
+                            <a href="/?signin=Yes" class="disabled btn btn-primary">Sign in</a>
                         </form>
                     % else:
                         % name = userData['name'] if bool(userData['name']) else userData['email']

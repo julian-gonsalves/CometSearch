@@ -9,11 +9,6 @@
             </div>
             <button type="submit" class="col-sm-2 btn btn-primary btn-lg"><span class="glyphicon glyphicon-search"></span> Search</button>
         </form>
-		<form method="GET" class="text-center">
-            <div class="col-md-6 col-sm-6 col-xs-10 col-md-offset-2 col-sm-offset-2 col-xs-offset-1">
-				<button type="submit" class="col-md-6 btn form-control input-lg"> Suggestion</button>
-			</div>
-        </form> 
     </div>
     <div class="row-offset-small"></div>
     <div class="row">
