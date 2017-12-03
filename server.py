@@ -7,7 +7,7 @@ from googleapiclient.discovery import build
 from beaker.middleware import SessionMiddleware
 from query_comprehension import query_comprehension
 from query_comprehension import evaluate
-from spellcheck import SpellCheck
+#from spellcheck import SpellCheck
 
 import MySQLdb
 import redis
@@ -300,29 +300,40 @@ def show_index():
     #Initialize user in session if not done already
     if 'user' not in current_session:
         current_session['user'] = None
-
+	
     if bool(request.query.keywords):
         search_query = request.query.getall("keywords")
-        conn = get_connection()
-        top_words, recent_queries,insertion_order_list,calculated,rs = handle_search_words(search_query[0],current_session,conn)
-        conn.close()
-	listOfWords = re.sub("[^\w]"," ",search_query[0].lower()).split()
-        spellChecker = []
-	for the_word in listOfWords:
-            spellChecker.append(SpellCheck(the_word))
-		
-        return template('results', 
-            insertion_order_list = insertion_order_list, 
-            calculated = calculated,
-            top_words=top_words,
-            recent_queries = recent_queries,
-            search_query=search_query[0],
+        result = query_comprehension(search_query[0])
+        math_equation = tuple()
+        if isinstance(result, str) or result == None:
+            math_equation = (0, result)
+        else:
+            math_equation = (1, result)
+        print math_equation
+        if math_equation[0] == 1:
+            return template('interpretor', 
             userData = current_session['user'],
-            results = rs,
-	    spellChecked = spellChecker
+            math_eq = search_query[0] + ' is ' + str(result),
+	    )
+	elif math_equation[0] == 0:
+            conn = get_connection()
+	    top_words, recent_queries,insertion_order_list,calculated,rs = handle_search_words(search_query[0],current_session,conn)
+	    conn.close()
+	    listOfWords = re.sub("[^\w]"," ",search_query[0].lower()).split()
+	    spellChecker = []
+	    #for the_word in listOfWords:
+	    #    spellChecker.append(SpellCheck(the_word))
+	    return template('results', 
+	    	insertion_order_list = insertion_order_list, 
+    		calculated = calculated,
+                top_words=top_words,
+	    	recent_queries = recent_queries,
+    		search_query=search_query[0],
+                userData = current_session['user'],
+	    	results = rs,
+		spellChecked = spellChecker
+		)
 
-        )
-    
     elif bool(request.query.page):
         page_num = search_query = request.query.getall("page")
         conn = get_connection()
