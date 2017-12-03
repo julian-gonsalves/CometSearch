@@ -317,10 +317,18 @@ def show_index():
             conn = get_connection()
 	    top_words, recent_queries,insertion_order_list,calculated,rs = handle_search_words(search_query[0],current_session,conn)
 	    conn.close()
+		
+		#for spell checking
 	    listOfWords = re.sub("[^\w]"," ",search_query[0].lower()).split()
 	    spellChecker = []
+		#spellcheck every word in query
 	    for the_word in listOfWords:
 	        spellChecker.append(SpellCheck(the_word))
+			
+		spellCheckedQuery = ''
+		for i in range (0,len(spellChecker)):
+			spellCheckedQuery = str(spellCheckedQuery) + ' ' + str(spellChecker[i])
+			
 	    return template('results', 
 	    	insertion_order_list = insertion_order_list, 
     		calculated = calculated,
@@ -329,7 +337,7 @@ def show_index():
     		search_query=search_query[0],
                 userData = current_session['user'],
 	    	results = rs,
-		spellChecked = spellChecker
+		spellChecked = spellCheckedQuery
 		)
 
     elif bool(request.query.page):

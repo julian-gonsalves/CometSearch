@@ -15,11 +15,7 @@
     </div>
 	<div>
 	<!--Display spellchecked search query -->
-		<span>Did you mean:
-		
-		%for i in range (0,len(spellChecked)):
-			{{spellChecked[i]}}
-		</span>
+		<span>Did you mean: {{spellChecked}} </span>
 	</div>
     <div class='row'>
         <div class="col-md-8 col-sm-8 col-xs-10 col-md-offset-2 col-sm-offset-2 col-xs-offset-1">
