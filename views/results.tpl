@@ -15,7 +15,19 @@
     </div>
 	<div>
 	<!--Display spellchecked search query -->
-		<span>Did you mean: {{spellChecked}} </span>
+		%if search_query != spellChecked:
+	        <form method="GET" class="text-center">
+            <div class="col-md-6 col-sm-6 col-xs-10 col-md-offset-2 col-sm-offset-2 col-xs-offset-1">
+                <div class="form-group">
+					<p>Did you mean: </p>
+                    <input type="submit" name="keywords" value="{{spellChecked}}" class="form-control input-lg" placeholder="Spell Check">
+                </div>
+            </div>
+			</form> 
+		%end
+		<!--<span>Did you mean: {{spellChecked}} </span>-->
+		
+		
 	</div>
     <div class='row'>
         <div class="col-md-8 col-sm-8 col-xs-10 col-md-offset-2 col-sm-offset-2 col-xs-offset-1">

@@ -325,8 +325,8 @@ def show_index():
 	    for the_word in listOfWords:
 	        spellChecker.append(SpellCheck(the_word))
 			
-		spellCheckedQuery = ''
-		for i in range (0,len(spellChecker)):
+		spellCheckedQuery = str(spellChecker[0])
+		for i in range (1,len(spellChecker)):
 			spellCheckedQuery = str(spellCheckedQuery) + ' ' + str(spellChecker[i])
 			
 	    return template('results', 
