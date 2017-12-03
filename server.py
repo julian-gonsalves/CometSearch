@@ -5,6 +5,7 @@ from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
 from beaker.middleware import SessionMiddleware
 from query_comprehension import query_comprehension, evaluate
+from spellcheck import SpellCheck
 
 import MySQLdb
 import redis
@@ -318,8 +319,8 @@ def show_index():
 	    conn.close()
 	    listOfWords = re.sub("[^\w]"," ",search_query[0].lower()).split()
 	    spellChecker = []
-	    #for the_word in listOfWords:
-	    #    spellChecker.append(SpellCheck(the_word))
+	    for the_word in listOfWords:
+	        spellChecker.append(SpellCheck(the_word))
 	    return template('results', 
 	    	insertion_order_list = insertion_order_list, 
     		calculated = calculated,
