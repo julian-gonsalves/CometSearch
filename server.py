@@ -1,11 +1,13 @@
 import operator, re, httplib2, time, math, pickle
 from bottle import route, run, static_file,view, get,post, template, request, redirect, app, PasteServer, error
-from oauth2client.client import OAuth2WebServerFlow,flow_from_clientsecrets
+from oauth2client.client import OAuth2WebServerFlow
+from oauth2client.client import flow_from_clientsecrets
 from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
 from beaker.middleware import SessionMiddleware
-from query_comprehension import query_comprehension, evaluate
-from spellcheck import SpellCheck
+from query_comprehension import query_comprehension
+from query_comprehension import evaluate
+#from spellcheck import SpellCheck
 
 import MySQLdb
 import redis
@@ -54,120 +56,80 @@ def get_connection():
                     user = "cometDev", passwd= "mycometdev", db = "cometDev", port=3306)
 
 # Control word search
-def check_db(words,current_session,conn,qid):
-    if get_results(current_session.id,conn,qid):
-        return True
-    #Get all word ids from lexicon
-    word_ids = get_word_id(words,conn)
-    if word_ids == -1:
+def check_db(word,current_session,conn):
+    word_id = get_word_id(word,conn)
+    if word_id == -1:
         return False
-    # Get all info from hitlist where word in word ids
-    docs = get_document_info(word_ids,conn)
-    if not docs:
+    doc_ids = lookup_invereted_index(word_id,conn)
+    if not doc_ids:
         return False
-    # Calculate relevance ranking
-    maxrr,doc_relevance = relevance_ranking(docs,word_ids)
-    maxqr,doc_quality = get_document_rankings(conn,docs.keys())
-    # Calculate total rankings, normalize and sort
-    for i in range(len(doc_quality)):
-        xx = 0.1*(doc_quality[i][4]/max([maxqr,1])) + 0.9*(doc_relevance[doc_quality[i][0]]/max([maxrr,1]))
-        doc_quality[i] = (doc_quality[i][0],doc_quality[i][1],doc_quality[i][2],doc_quality[i][3],xx)
-    
-    documentsinfo = sorted(doc_quality, key=lambda x: x[4],reverse=True)
-    
+    documentsinfo = get_document(doc_ids,conn)
+    if not documentsinfo:
+        return False
     # Now store somewhere relative to the session
     pickledInfo = pickle.dumps(documentsinfo)
-    return store_results(pickledInfo, current_session.id, len(documentsinfo),conn,qid)
+    return store_results(pickledInfo, current_session.id, len(documentsinfo),conn)
 
 # gets the word id from lexicon
-def get_word_id(words,conn):
+def get_word_id(word,conn):
     c = conn.cursor()
     try:
-        sql='''select id,word from lexicon  WHERE word IN (%s)''' 
-        in_p=', '.join(map(lambda x: '%s', words))
-        sql = sql % in_p
-       # print sql, words
-        c.execute(sql, words)
+        c.execute('''select id from lexicon where word=%s''', (word,))
         if not c.rowcount:
             # no word found
-            print "ERROR: word not found"
+            print "ERROR: The word {0} doesn't exist in the lexicon".format(word)
             return -1
-        results = c.fetchall()
-        return [result[0] for result in results]
-    except MySQLdb.Error as e:
-        print "An error occurred: ", e.args
-        print "ERROR: Unable to get word id for: ", words
-        return -1
-# get relevant hitlist
-def get_document_info(wordids,conn):
-    c = conn.cursor()
-    try:
-        docs = {}
-        sql='''select docid,wordid,importance from hitlist WHERE wordid IN (%s)''' 
-        in_p=', '.join(map(lambda x: '%s', wordids))
-        sql = sql % in_p
-        #print sql, docids
-        c.execute(sql, wordids)
-        if not c.rowcount:
-            # no documentinfo found
-            print "ERROR: document information not found"
-            return None
-        results = c.fetchall()
-        for result in results:
-            doc_id = result[0]
-            word_id = result[1]
-            importance = result[2]
-            if doc_id not in docs:
-                docs[doc_id] = {}
-            if word_id not in docs[doc_id]:
-                docs[doc_id][word_id] = list()
-            docs[doc_id][word_id].append(importance)
-        return docs
+        result = c.fetchone()
+        return result[0]
     except MySQLdb.Error as e:
         print "An error occurred:", e.args
-        print "ERROR: Unable to get doc infos"
-        return None
+        print "ERROR: Unable to get word id for {0}".format(word)
+        return -1
 
-# get page rankings
-def get_document_rankings(conn, docids):
+# gets all docids from inverted index given a word
+def lookup_invereted_index(wordid,conn):
     c = conn.cursor()
     try:
-        docs = []
-        sql='''select id,url,title,description,rank from documentIndex left join pagerank on id=docid  WHERE id IN (%s)''' 
+        c.execute('''select distinct docid from invertedIndex where wordid=%s''', (wordid,))
+        if not c.rowcount:
+            # no docids found
+            print "ERROR: The wordid {0} doesn't exist in invereted index".format(wordid)
+            return None
+        results = c.fetchall()
+        return [int(result[0]) for result in results]
+    except MySQLdb.Error as e:
+        print "An error occurred:", e.args
+        print "ERROR: Unable to get doc ids for {0}".format(wordid)
+        return None
+
+def get_document(docids,conn):
+    c = conn.cursor()
+    try:
+        sql='''select docid, url, title, description, rank from documentIndex right join pagerank on id=docid  WHERE id IN (%s) order by rank desc''' 
         in_p=', '.join(map(lambda x: '%s', docids))
         sql = sql % in_p
-        #print sql, docids
+        print sql, docids
         c.execute(sql, docids)
         if not c.rowcount:
             # no documentinfo found
             print "ERROR: document information not found"
             return None
         results = c.fetchall()
-        maxqr = 0
-        for result in results:
-            doc_id = result[0]
-            url = result[1]
-            title = result[2]
-            description = result[3]
-            rank = 0 if result[4] == None else float(result[4])
-            docs.append((doc_id,url,title,description,rank))
-            if rank > maxqr:
-                maxqr = rank
-        return maxqr,docs
+        return [(result[0],result[1],result[2],result[3],result[4]) for result in results]
     except MySQLdb.Error as e:
         print "An error occurred:", e.args
-        print "ERROR: Unable to get doc infos"
+        print "ERROR: Unable to resolve docids"
         return None
 
 # Store pickled search results
-def store_results(results, sessionkey,totalNum,conn,qid):
+def store_results(results, sessionkey,totalNum,conn):
     c = conn.cursor()
     try:
-        c.execute('''select sessionID from searchResults where sessionID = %s''', (qid,))
+        c.execute('''select sessionID from searchResults where sessionID = %s''', (sessionkey,))
         if c.rowcount:
-            c.execute('''update searchResults set searchResult = %s, totalNum = %s  where sessionID = %s''', (results,totalNum,qid,))
+            c.execute('''update searchResults set searchResult = %s, totalNum = %s  where sessionID = %s''', (results,totalNum,sessionkey,))
         else:
-            c.execute('''insert into searchResults(sessionID, searchResult,totalNum) values(%s,%s,%s) ''', (qid,results,totalNum))
+            c.execute('''insert into searchResults(sessionID, searchResult,totalNum) values(%s,%s,%s) ''', (sessionkey,results,totalNum))
         conn.commit()
         return True
     except MySQLdb.Error as e:
@@ -176,10 +138,10 @@ def store_results(results, sessionkey,totalNum,conn,qid):
         return False
 
 # get pickled search results
-def get_results(sessionkey,conn,qid):
+def get_results(sessionkey,conn):
     c = conn.cursor()
     try:
-        c.execute('''select searchResult,totalNum from searchResults where sessionID = %s''', (qid,))
+        c.execute('''select searchResult,totalNum from searchResults where sessionID = %s''', (sessionkey,))
         if not c.rowcount:
             # no searchResults found
             print "ERROR: document information not found"
@@ -232,64 +194,18 @@ def handle_search_words(phrase, current_session,conn):
         
     # get current query word list in order
     insertion_order_list = get_word_list(words)
-    qid = pickle.dumps(sorted(words))
-    current_session['qid'] = qid
-
 
     # get word count
     word_count = calculate(phrase)
 
-    if check_db(list(words),current_session,conn,qid):
-        results = paginate_search_results(1,current_session,conn,qid)
+    if check_db(words[0],current_session,conn):
+        results = paginate_search_results(1,current_session,conn)
     else:
         results = None
 
     
     return (top_words, recent_queries, insertion_order_list, word_count, results)
 
-def relevance_ranking(docs,wordids):
-    # create time frequency, tf
-    maxrr = 0
-    tf = {docid:{wordid:0 for wordid in wordids} for docid in docs.keys()}
-    for docid in docs.keys():
-        for wordid in docs[docid]:
-            tf[docid][wordid]=math.sqrt(len(docs[docid][wordid]))
-    #create docfreq
-    docfreq = {wordid:0 for wordid in wordids}
-    for wordid in wordids:
-        for doc_id in docs:
-            if wordid in docs[doc_id]:
-                docfreq[wordid] += 1
-    #calculate inverse document function
-    idf = {wordid:0 for wordid in wordids}
-    for wordid in wordids:
-        idf[wordid]=1 + math.log10(float(len(docs))/(docfreq[wordid] +1))
-    #Calculate query normalizations
-    queryNorm = 1/math.sqrt(sum([idf[wordid]**2 for wordid in list(idf.keys())]))
-    #Calculate query coordination factor
-    coordf={doc_id:float(len(docs[doc_id]))/len(wordids) for doc_id in docs.keys()}
-    #Calculate fieldNorm[doc_id][wordid]
-    fieldNorm = {docid:{wordid:0 for wordid in wordids} for docid in docs.keys()}
-    maxfieldNorm = 0
-    for docid in docs.keys():
-        for wordid in docs[docid]:
-            fieldNorm[docid][wordid] = sum(docs[docid][wordid])
-            if fieldNorm[docid][wordid] > maxfieldNorm:
-                maxfieldNorm = fieldNorm[docid][wordid] 
-	#Normalize by dividing with max
-    for docid in docs.keys():
-        for wordid in docs[docid]:
-            fieldNorm[docid][wordid] = float(fieldNorm[docid][wordid])/float(maxfieldNorm)
-    #Calculate relevance ranking
-    r_s={}
-    for doc_id in docs:
-        total_weight = 0
-        for wordid in wordids:
-            total_weight += tf[doc_id][wordid]*idf[wordid]*fieldNorm[doc_id][wordid]
-        r_s[doc_id] = queryNorm * coordf[doc_id] * total_weight
-        if r_s[doc_id] > maxrr:
-            maxrr = r_s[doc_id]
-    return maxrr,r_s
 
 def get_recent_queries(current_session):
     """ Sorts the user's query cache db and returns the 10 most recent searches """
@@ -326,12 +242,10 @@ def calculate(inputText):
 
 
 # paginate search results and return at most n results
-def paginate_search_results(page,current_session,conn,qid=0):
-    if not qid:
-        qid = current_session['qid']
+def paginate_search_results(page,current_session,conn):
     N = 5 #number of links per page
     page = int(page)
-    pickled_results,total_num = get_results(current_session.id,conn,qid)
+    pickled_results,total_num = get_results(current_session.id,conn)
     results = pickle.loads(pickled_results)
     total_pages = int(math.ceil(float(total_num)/N))
     start_index = (page-1)*N
@@ -386,33 +300,44 @@ def show_index():
     #Initialize user in session if not done already
     if 'user' not in current_session:
         current_session['user'] = None
-
+	
     if bool(request.query.keywords):
         search_query = request.query.getall("keywords")
-        conn = get_connection()
-        top_words, recent_queries,insertion_order_list,calculated,rs = handle_search_words(search_query[0],current_session,conn)
-        conn.close()
-	listOfWords = re.sub("[^\w]"," ",search_query[0].lower()).split()
-        spellChecker = []
-	for the_word in listOfWords:
-            spellChecker.append(SpellCheck(the_word))
-		
-        return template('results', 
-            insertion_order_list = insertion_order_list, 
-            calculated = calculated,
-            top_words=top_words,
-            recent_queries = recent_queries,
-            search_query=search_query[0],
+        result = query_comprehension(search_query[0])
+        math_equation = tuple()
+        if isinstance(result, str) or result == None:
+            math_equation = (0, result)
+        else:
+            math_equation = (1, result)
+        print math_equation
+        if math_equation[0] == 1:
+            return template('interpretor', 
             userData = current_session['user'],
-            results = rs,
-	    spellChecked = spellChecker
+            math_eq = search_query[0] + ' is ' + str(result),
+	    )
+	elif math_equation[0] == 0:
+            conn = get_connection()
+	    top_words, recent_queries,insertion_order_list,calculated,rs = handle_search_words(search_query[0],current_session,conn)
+	    conn.close()
+	    listOfWords = re.sub("[^\w]"," ",search_query[0].lower()).split()
+	    spellChecker = []
+	    #for the_word in listOfWords:
+	    #    spellChecker.append(SpellCheck(the_word))
+	    return template('results', 
+	    	insertion_order_list = insertion_order_list, 
+    		calculated = calculated,
+                top_words=top_words,
+	    	recent_queries = recent_queries,
+    		search_query=search_query[0],
+                userData = current_session['user'],
+	    	results = rs,
+		spellChecked = spellChecker
+		)
 
-        )
-    
     elif bool(request.query.page):
         page_num = search_query = request.query.getall("page")
         conn = get_connection()
-        results = paginate_search_results(page_num[0],current_session,conn,qid)
+        results = paginate_search_results(page_num[0],current_session,conn)
         conn.close()
         return template('paginate', results=results)
 
@@ -493,5 +418,5 @@ def pages(filepath):
 
 
 # ******************* START Application Server Run *********************
-run(app, host='localhost', port=80, server=PasteServer)
+run(app, host='127.0.0.1', port=80, server=PasteServer)
 # ******************** END Application Server Run **********************
