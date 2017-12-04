@@ -337,7 +337,7 @@ def show_index():
     		search_query=search_query[0],
                 userData = current_session['user'],
 	    	results = rs,
-		spellChecked = spellCheckedQuery
+		#spellChecked = spellCheckedQuery
 		)
 
     elif bool(request.query.page):
