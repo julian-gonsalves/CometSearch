@@ -18,7 +18,7 @@ def query_comprehension(input):
 
 	if input.find('e') != -1:
 		input = input.replace('e', str(math.e))
-        if (input[0] in ops and input[0] != "-") or input == "":
+        if input.strip() == "" or (input[0] in ops and input[0] != "-"):
             return origin
 	try:
 		return evaluate(ast.parse(input, mode='eval').body)
