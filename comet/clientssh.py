@@ -12,21 +12,15 @@ class ssh:
         self.client = clientInstance
         self.sftp = self.client.open_sftp()
  
-    def sendCommand(self, command):
+    def cmd(self, command):
         if(self.client):
+            print "Running command>> ", command
             stdin, stdout, stderr = self.client.run(command)
-            while not stdout.channel.exit_status_ready():
-                # Print data when available
-                if stdout.channel.recv_ready():
-                    alldata = stdout.channel.recv(1024)
-                    prevdata = b"1"
-                    while prevdata:
-                        prevdata = stdout.channel.recv(1024)
-                        alldata += prevdata
- 
-                    print(str(alldata, "utf8"))
-        else:
-            print("Connection not opened.")
+            if stdout is not '' or stdout is not None: 
+                print stdout
+            if stderr is not '' or stderr is not None:
+                print( "Errors")
+                print stderr
 
     def put(self,localfile,remotefile):
         #  Copy localfile to remotefile, overwriting or creating as needed.
