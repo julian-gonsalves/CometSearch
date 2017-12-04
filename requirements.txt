@@ -5,3 +5,7 @@ google-api-python-client
 beaker
 mysqlclient
 redis
+nltk
+ast
+astor
+enchant

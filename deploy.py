@@ -124,6 +124,8 @@ ssh_client_.put('client_secrets.json','./comet/client_secrets.json')
 ssh_client_.put('server.py','./comet/server.py')
 ssh_client_.put_all('./public','./comet')
 ssh_client_.put_all('./views','./comet')
+ssh_client_.put('query_comprehension.py','./comet/query_comprehension.py')
+ssh_client_.put('spellcheck.py','./comet/spellcheck.py')
 
 # 7. run        nohup sudo python server.py > server.log &
 cmd = "nohup sh -c 'cd comet && sudo python server.py' > nohup.out 2> nohup.err < /dev/null &"
