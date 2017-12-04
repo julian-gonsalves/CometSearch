@@ -5,7 +5,7 @@ from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
 from beaker.middleware import SessionMiddleware
 from query_comprehension import query_comprehension, evaluate
-from spellcheck import SpellCheck
+#from spellcheck import SpellCheck
 
 import MySQLdb
 import redis
@@ -196,7 +196,7 @@ def handle_search_words(phrase, current_session,conn):
     # get word count
     word_count = calculate(phrase)
 
-    if check_db(words[0],current_session,conn):
+    if len(words) != 0 and check_db(words[0],current_session,conn):
         results = paginate_search_results(1,current_session,conn)
     else:
         results = None
@@ -318,16 +318,16 @@ def show_index():
 	    top_words, recent_queries,insertion_order_list,calculated,rs = handle_search_words(search_query[0],current_session,conn)
 	    conn.close()
 		
-		#for spell checking
+	    #for spell checking
 	    listOfWords = re.sub("[^\w]"," ",search_query[0].lower()).split()
 	    spellChecker = []
-		#spellcheck every word in query
-	    for the_word in listOfWords:
-	        spellChecker.append(SpellCheck(the_word))
-			
-		spellCheckedQuery = str(spellChecker[0])
-		for i in range (1,len(spellChecker)):
-			spellCheckedQuery = str(spellCheckedQuery) + ' ' + str(spellChecker[i])
+	    #spellcheck every word in query
+	    #for the_word in listOfWords:
+	        #spellChecker.append(SpellCheck(the_word))
+	    spellCheckedQuery = ""	
+                #spellCheckedQuery = str(spellChecker[0])
+                #for i in range (1,len(spellChecker)):
+		#	spellCheckedQuery = str(spellCheckedQuery) + ' ' + str(spellChecker[i])
 			
 	    return template('results', 
 	    	insertion_order_list = insertion_order_list, 
