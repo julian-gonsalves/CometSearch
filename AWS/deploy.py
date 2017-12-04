@@ -94,7 +94,6 @@ while instance_not_reachable():
 ssh_client = boto.manage.cmdshell.sshclient_from_instance(
                 instance,
                 keyfile,
-                host_key_file='/dev/null',
                 user_name='ec2-user'
             )
 if not ssh_client:
@@ -110,26 +109,19 @@ print "Installing packages...(this may take awhile)"
 # 1. Copy       requirements.txt                        to remote
 ssh_client_.put('requirements.txt', 'requirements.txt')
 # 2. Install    redis          to remote
-print ssh_client.run('sudo yum -y --enablerepo=epel install redis')
+ssh_client_.cmd('sudo yum -y --enablerepo=epel install redis')
 # 3. run        sudo yum install mysql-devel gcc gcc-devel python-devel
-print ssh_client.run('sudo yum -y install mysql-devel gcc gcc-devel python-devel')
+ssh_client_.cmd('sudo yum -y install mysql-devel gcc gcc-devel python-devel')
 # 4. run        sudo pip install -r requirements
-print ssh_client.run('sudo pip install -r requirements.txt')
-# 5. run        mkdir comet
-ssh_client.run('mkdir comet')
+ssh_client_.cmd('sudo pip install -r requirements.txt')
 # 6. copy       files_to_copy   content to      comet
 # --- Single Files -----
 print "copying files..."
-ssh_client_.put('client_secrets.json','./comet/client_secrets.json')
-ssh_client_.put('server.py','./comet/server.py')
-ssh_client_.put_all('./public','./comet')
-ssh_client_.put_all('./views','./comet')
-ssh_client_.put('query_comprehension.py','./comet/query_comprehension.py')
-ssh_client_.put('spellcheck.py','./comet/spellcheck.py')
+ssh_client_.put_all('../comet','./')
 
 # 7. run        nohup sudo python server.py > server.log &
-cmd = "nohup sh -c 'cd comet && sudo python server.py' > nohup.out 2> nohup.err < /dev/null &"
-print ssh_client.run(cmd)
+cmd_str = "nohup sh -c 'cd comet && sudo python server.py' > nohup.out 2> nohup.err < /dev/null &"
+ssh_client_.cmd(cmd_str)
 
 
 print "Instance {0} is set up and running at {1} ({2})".format(instance.id, instance.ip_address, instance.public_dns_name)

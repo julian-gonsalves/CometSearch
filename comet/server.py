@@ -424,5 +424,5 @@ def pages(filepath):
 
 
 # ******************* START Application Server Run *********************
-run(app, host='127.0.0.1', port=80, server=PasteServer)
+run(app, host='0.0.0.0', port=80, server=PasteServer)
 # ******************** END Application Server Run **********************

@@ -8,4 +8,4 @@ redis
 nltk
 ast
 astor
-enchant
+pyenchant
